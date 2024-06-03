@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+    <link rel = "stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        
+        <img src="/images/kpi-big-logo.png" class = "kpi_logo header_part" alt="kpi-logo">
+        
+        <div class="header_part">
+            <ul class="menu_header_list">
+                <li><a href="/" class="menu_li">Головна сторінка</a></li>
+                <li><a href="/prodaction_plan_page" class="menu_li">План виробництва</a></li>
+                <li><a href="/products_page" class="menu_li">Про продукцію</a></li>
+                <li><a href="/orders_page" class="menu_li active_menu_li">Замовлення</a></li>
+                <li><a href="/customers_page" class="menu_li">Замовники</a></li>
+                <li><a href="/about_page" class="menu_li">Інформація</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class = "introduction">
+        <div class="background">
+            <h2 class="title ">Замовлення</h2>
+            <div class="conteiner_for_table">
+                <table class="output_table">
+                    <tr class="table_row first_row"> 
+                        <th class="subtitle cell">ПІБ Замовника</th>
+                        <th class="subtitle cell">Продукція</th>
+                        <th class="subtitle cell">Дата відвантаження</th>
+                        <th class="subtitle cell"></th>
+                        <th class="subtitle cell"></th>
+                    </tr>
+
+                    <% order.forEach(ord => { %>
+                    <tr class="table_row"  data-id="<%= ord.Id %>">   
+                        <td class="no_main_text cell"><%= ord.Customer_name %></td>
+                        <td class="no_main_text cell"><%= ord.Product_name %></td>
+                        <% const date = new Date(ord.Date_of_shipment); %>
+                        <td class="no_main_text cell"><%= date.getFullYear() %>-<%= (date.getMonth() + 1).toString().padStart(2, '0') %>-<%= date.getDate().toString().padStart(2, '0') %></td>
+                        <td><img src="/images/edit_icon.png" class="icon_in_table edit_button" alt="edit icon"></td>
+                        <td><img src="/images/delete_icon.png" class="icon_in_table delete_button" alt="delete icon" title="Видалити рядок" data-id="<%= ord.Id %>"></td>
+                    </tr>
+                    <% }); %>
+                </table>    
+
+                <button id="add_to_table_button" class="add_to_table no_main_text">Додати замовлення</button>
+            </div>
+
+            <div class="overlay hidden" id="editOverlay"></div>
+            <div id="editFormContainer" class="form-container hidden">
+                <form id="editPlanForm" action="/products_page/edit" method="POST">
+                    <button type="button" class="form_close_button" id="closeEditFormButton">X</button>
+                    
+                    <input type="hidden" id="editId" name="id">
+                    
+                    <div class="form_lable_input">
+                        <label for="editcustomerName">ПІБ Замовника:</label>
+                        <input type="text" class="form_input" id="editcustomerName" name="customerName" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="editproductName">Продукція:</label>
+                        <input type="text" class="form_input" id="editproductName" name="productName" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="editshipmentDate">Дата відвантаження:</label>
+                        <input type="date" class="form_input" id="editshipmentDate" name="shipmentDate" required><br>
+                    </div>
+                    
+                    <div class="form_button_wrapper">
+                        <button type="submit" class="form_add_button">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="overlay hidden" id="overlay"></div>
+            <div id="addFormContainer" class="form-container hidden">
+                <form id="addOrderForm" action="/production_plan_page/add" method="POST">
+                    <button type="button" class="form_close_button" id="closeFormButton">X</button>
+
+                    <div class="form_lable_input">
+                        <label for="customerName">ПІБ Замовника:</label>
+                        <input type="text" class="form_input" id="customerName" name="customerName" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="productName">Продукція:</label>
+                        <input type="text" class="form_input" id="productName" name="productName" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="shipmentDate">Дата відвантаження:</label>
+                        <input type="date" class="form_input" id="shipmentDate" name="shipmentDate" required><br>
+                    </div>
+
+                    <div class="form_button_wrapper">
+                        <button type="submit" class="form_add_button">Додати</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="last_text_midle">
+            © 2024 Maria Larina's Course Work
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addProductButton = document.getElementById('add_to_table_button');
+            const addFormContainer = document.getElementById('addFormContainer');
+            const overlay = document.getElementById('overlay');
+            const closeFormButton = document.getElementById('closeFormButton');
+
+            function openForm() {
+                addFormContainer.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+            }
+
+            function closeForm() {
+                addFormContainer.classList.add('hidden');
+                overlay.classList.add('hidden');
+                location.reload();
+            }
+
+            addProductButton.addEventListener('click', openForm);
+            closeFormButton.addEventListener('click', closeForm);
+            overlay.addEventListener('click', closeForm);
+
+            const addOrderForm = document.getElementById('addOrderForm');
+
+            addOrderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(addOrderForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/orders_page/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (response.ok) {
+                        alert('Order added sucsessfully');
+                        closeForm();
+                        location.reload();
+                    } else {
+                        alert('Error! Order didn`t added');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error in adding order');
+                }
+            });
+        });
+
+        // Edit form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const editButtons = document.querySelectorAll('.edit_button');
+            const editFormContainer = document.getElementById('editFormContainer');
+            const editOverlay = document.getElementById('editOverlay');
+            const closeEditFormButton = document.getElementById('closeEditFormButton');
+            const editPlanForm = document.getElementById('editPlanForm');
+
+            function openEditForm() {
+                editFormContainer.classList.remove('hidden');
+                editOverlay.classList.remove('hidden');
+            }
+
+            function closeEditForm() {
+                editFormContainer.classList.add('hidden');
+                editOverlay.classList.add('hidden');
+                location.reload();
+            }
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    openEditForm();
+                    const rowId = event.target.closest('tr').dataset.id; //id
+                    console.log(rowId);
+                    try {
+                        const response = await fetch(`/orders_page/${rowId}`);
+                        console.log(response);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const orderArray = await response.json(); // Use `orderArray` instead of `productArray`
+                        console.log(orderArray);
+
+                        if (orderArray) {
+                            const order = orderArray[0]; // No need to access first element
+                            if (order && order.Date_of_shipment) {
+                            document.getElementById('editId').value = rowId;
+                            document.getElementById('editcustomerName').value = order.Customer_name || '';
+                            document.getElementById('editproductName').value = order.Product_name || ''; // Fix casing
+                            document.getElementById('editshipmentDate').value = order.Date_of_shipment.split('T')[0] || '';
+                            } else {
+                                throw new Error('Invalid order');
+                            } 
+                        } else {
+                            throw new Error('No order found');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching order details:', error);
+                        alert('Error fetching order details');
+                    }
+                });
+            });
+
+            closeEditFormButton.addEventListener('click', closeEditForm);
+
+            editPlanForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(editPlanForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/orders_page/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    if (response.ok) {
+                        alert('Order row updated successfully');
+                        closeEditForm();
+                        location.reload();
+                    } else {
+                        alert('Error! Order row did not update');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error in updating order row');
+                }
+            });
+        });
+
+        // Delete row handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const deleteButtons = document.querySelectorAll('.delete_button');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    const rowId = event.target.dataset.id;
+                    console.log('Deleting row with ID:', rowId);  // Debugging line
+                    const confirmation = confirm('Are you sure you want to delete this row?');
+                    
+                    if (confirmation) {
+                        try {
+                            const response = await fetch(`/orders_page/delete/${rowId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+
+                            if (response.ok) {
+                                alert('Row deleted successfully');
+                                location.reload();
+                            } else {
+                                alert('Error! Row did not delete');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error in deleting row');
+                        }
+                    }
+                });
+            });
+        });
+
+
+    </script>
+</body>
+</html>

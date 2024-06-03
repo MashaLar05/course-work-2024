@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master production schedule</title>
+    <link rel = "stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        
+        <img src="/images/kpi-big-logo.png" class = "kpi_logo header_part" alt="kpi-logo">
+        
+        <div class="header_part">
+            <ul class="menu_header_list">
+                <li><a href="/" class="menu_li">Головна сторінка</a></li>
+                <li><a href="/prodaction_plan_page" class="menu_li active_menu_li">План виробництва</a></li>
+                <li><a href="/products_page" class="menu_li">Про продукцію</a></li>
+                <li><a href="/orders_page" class="menu_li">Замовлення</a></li>
+                <li><a href="/customers_page" class="menu_li">Замовники</a></li>
+                <li><a href="/about_page" class="menu_li">Інформація</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class = "introduction">
+        <div class="background">
+
+            <% if (production_plan) { %>
+            <h2 class="title ">Головний календарний план виробництва</h2>
+
+            <form action="/production_plan_page/date" id="filterForm" method="GET" class="date_filter_form no_main_text">
+                <label for="filterDate">Фільтрувати за датою:</label>
+                <input type="date" id="filterDate" class="form_filter_input" name="shipmentDate" required>
+                <button type="submit" id="filter_button" class="filter_button">Фільтрувати</button>
+            </form>
+            
+            <div class="conteiner_for_table">
+                <table class="output_table table_of_plan">
+                    <tr class="table_row first_row"> 
+                        <th class="subtitle cell">Назва</th>
+                        <th class="subtitle cell">Залишок</th>
+                        <th class="subtitle cell">Дата відвантаження</th>
+                        <th class="subtitle cell">Попит</th>
+                        <th class="subtitle cell" style="padding-left: 20px;">Виробництво</th>
+                        <th class="subtitle cell"></th>
+                        <th class="subtitle cell"></th>
+                    </tr>
+
+                    <% production_plan.forEach(plan => { %>
+                        <tr class="table_row" data-id="<%= plan.Id %>">    
+                            <td class="no_main_text cell"><%= plan.Product_name %></td>
+                            <td class="no_main_text cell" title="Детальна информація">
+                                <a href="/prodaction_plan_page/<%=plan.Id%>" class="numbers_in_table">
+                                    <%= plan.Stock_balance %>/<%= plan.ATP %>/<%= plan.New_Stock_balance %>
+                                </a>
+                            </td>
+                            <% const date = new Date(plan.Date_of_shipment); %>
+                            <td class="no_main_text cell"><%= date.getFullYear() %>-<%= (date.getMonth() + 1).toString().padStart(2, '0') %>-<%= date.getDate().toString().padStart(2, '0') %></td>
+                            <td class="no_main_text cell" title="Детальна информація">
+                                <a href="/prodaction_plan_page/<%=plan.Id%>" class="numbers_in_table">
+                                    <%= plan.Reserved_production %>/<%= plan.Internal_demand %>/<%= plan.Products_shipped %>
+                                </a>
+                            </td>
+                            <td class="no_main_text cell numbers_in_table" style="padding-left: 20px;"><%= plan.Production_quantity %></td>
+                            <td><img src="/images/edit_icon.png" class="icon_in_table edit_button" alt="edit icon"></td>
+                            <td><img src="/images/delete_icon.png" class="icon_in_table delete_button" alt="delete icon" title="Видалити рядок" data-id="<%= plan.Id %>"></td>
+                        </tr>
+                        
+                        <% }); %>
+                </table>    
+
+
+
+                <div class="overlay hidden" id="editOverlay"></div>
+                <div id="editFormContainer" class="form-container hidden">
+                    <form id="editPlanForm" action="/production_plan_page/edit" method="POST">
+                        <button type="button" class="form_close_button" id="closeEditFormButton">X</button>
+                        
+                        <input type="hidden" id="editId" name="id">
+                        
+                        <div class="form_lable_input">
+                            <label for="editProductName">Назва продукту:</label>
+                            <input type="text" class="form_input" id="editProductName" name="productName" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editStockBalance">Складський залишок:</label>
+                            <input type="number" class="form_input" id="editStockBalance" name="stockBalance" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editShipmentDate">Дата відвантаження:</label>
+                            <input type="date" class="form_input" id="editShipmentDate" name="shipmentDate" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editReservedProduction">Зарезервована:</label>
+                            <input type="number" class="form_input" id="editReservedProduction" name="reservedProduction" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editInternalDemand">Внутрішній попит:</label>
+                            <input type="number" class="form_input" id="editInternalDemand" name="internalDemand" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editProductsShipped">Відвантажено:</label>
+                            <input type="number" class="form_input" id="editProductsShipped" name="productsShipped" required><br>
+                        </div>
+                        
+                        <div class="form_lable_input">
+                            <label for="editProductionQuantity">Виробництво:</label>
+                            <input type="number" class="form_input" id="editProductionQuantity" name="productionQuantity" required><br>
+                        </div>
+                        
+                        <div class="form_button_wrapper">
+                            <button type="submit" class="form_add_button">Зберегти</button>
+                        </div>
+                    </form>
+                </div>
+
+
+                <button id="add_to_table_button" class="add_to_table no_main_text">Додати до плану</button>
+            </div>
+
+            <div class="overlay hidden" id="overlay"></div>
+  
+            <div id="addFormContainer" class="form-container hidden">
+                <form id="addPlanForm" action="/production_plan_page/add" method="POST">
+                    <button type="button" class="form_close_button" id="closeFormButton">X</button>
+
+                    <div class="form_lable_input">
+                        <label for="productName">Назва продукту:</label>
+                        <input type="text" class="form_input" id="productName" name="productName" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="stockBalance">Складський залишок:</label>
+                        <input type="number" class="form_input" id="stockBalance" name="stockBalance" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="shipmentDate">Дата відвантаження:</label>
+                        <input type="date" class="form_input" id="shipmentDate" name="shipmentDate" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="reservedProduction">Зарезервована:</label>
+                        <input type="number" class="form_input" id="reservedProduction" name="reservedProduction" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="internalDemand">Внутрішній попит:</label>
+                        <input type="number" class="form_input" id="internalDemand" name="internalDemand" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="productsShipped">Відвантажено:</label>
+                        <input type="number" class="form_input" id="productsShipped" name="productsShipped" required><br>
+                    </div>
+
+                    <div class="form_lable_input">
+                        <label for="productionQuantity">Виробництво:</label>
+                    <input type="number" class="form_input" id="productionQuantity" name="productionQuantity" required><br>
+                    </div>
+
+                    <div class="form_button_wrapper">
+                        <button type="submit" class="form_add_button">Додати</button>
+                    </div>
+                </form>
+            </div>
+
+
+            <% } else if (prodaction_plan_for_one && prodaction_plan_for_one.length > 0) { %>
+                <% const plan = prodaction_plan_for_one[0]; %>
+                <h2 class="title ">План виробництва для конкретного продукту</h2>
+            <table class="output_table table_of_plan">
+
+                <tr>
+                    <td class="subtitle cell">Назва</td>
+                    <td class="no_main_text cell"><%= plan.Product_name %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Складський залишок</td>
+                    <td class="no_main_text cell"><%= plan.Stock_balance %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">АТР</td>
+                    <td class="no_main_text cell"><%= plan.ATP %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Новий складський залишок</td>
+                    <td class="no_main_text cell"><%= plan.New_Stock_balance%></td>
+                </tr>
+                <% const date = new Date(plan.Date_of_shipment); %>
+                <tr>
+                    <td class="subtitle cell">Дата відвантаження</td>
+                    <td class="no_main_text cell"><%= date.getFullYear() %>-<%= (date.getMonth() + 1).toString().padStart(2, '0') %>-<%= date.getDate().toString().padStart(2, '0') %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Зарезервована</td>
+                    <td class="no_main_text cell"><%= plan.Reserved_production %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Внутрішній попит</td>
+                    <td class="no_main_text cell"><%= plan.Internal_demand %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Відвантажено</td>
+                    <td class="no_main_text cell"><%= plan.Products_shipped %></td>
+                </tr>
+                <tr>
+                    <td class="subtitle cell">Виробництво</td>
+                    <td class="no_main_text cell"><%= plan.Production_quantity %></td>
+                </tr>
+            </table> 
+            <% } %>   
+        </div>
+    </section>
+    
+    <footer>
+        <div class="last_text_midle">
+            © 2024 Maria Larina's Course Work
+        </div>
+    </footer>
+    <script>
+        // Add form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const addProductButton = document.getElementById('add_to_table_button');
+            const addFormContainer = document.getElementById('addFormContainer');
+            const overlay = document.getElementById('overlay');
+            const closeFormButton = document.getElementById('closeFormButton');
+
+            function openForm() {
+                addFormContainer.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+            }
+
+            function closeForm() {
+                addFormContainer.classList.add('hidden');
+                overlay.classList.add('hidden');
+                location.reload();
+            }
+
+            addProductButton.addEventListener('click', openForm);
+            closeFormButton.addEventListener('click', closeForm);
+            overlay.addEventListener('click', closeForm);
+
+            const addPlanForm = document.getElementById('addPlanForm');
+
+            addPlanForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(addPlanForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/prodaction_plan_page/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (response.ok) {
+                        alert('Plan`s row added sucsessfully');
+                        closeForm();
+                        location.reload();
+                    } else {
+                        alert('Error! Plan`s row didn`t added');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error in adding plan`s row');
+                }
+            });
+        });
+
+        // Edit form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const editButtons = document.querySelectorAll('.edit_button');
+            const editFormContainer = document.getElementById('editFormContainer');
+            const editOverlay = document.getElementById('editOverlay');
+            const closeEditFormButton = document.getElementById('closeEditFormButton');
+            const editPlanForm = document.getElementById('editPlanForm');
+
+            function openEditForm() {
+                editFormContainer.classList.remove('hidden');
+                editOverlay.classList.remove('hidden');
+            }
+
+            function closeEditForm() {
+                editFormContainer.classList.add('hidden');
+                editOverlay.classList.add('hidden');
+                location.reload();
+            }
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    openEditForm();
+                    const rowId = event.target.closest('tr').dataset.id; //==production_plan.Id
+
+                    try{
+                        const response = await fetch(`/prodaction_plan_page/${rowId}`);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const planArray  = await response.json();// array with all information
+
+                        if (planArray.length > 0) {
+                            const plan = planArray[0];  
+                            if (plan && plan.Date_of_shipment) {
+                                document.getElementById('editId').value = rowId;
+                                document.getElementById('editProductName').value = plan.Product_name || '';
+                                document.getElementById('editStockBalance').value = plan.Stock_balance || '';
+                                document.getElementById('editShipmentDate').value = plan.Date_of_shipment.split('T')[0] || '';
+                                document.getElementById('editReservedProduction').value = plan.Reserved_production || '';
+                                document.getElementById('editInternalDemand').value = plan.Internal_demand || '';
+                                document.getElementById('editProductsShipped').value = plan.Products_shipped || '';
+                                document.getElementById('editProductionQuantity').value = plan.Production_quantity || '';
+                            } else {
+                                throw new Error('Invalid plan data');
+                            }   
+                        }else {
+                            throw new Error('No plan data found');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching plan details:', error);
+                        alert('Error fetching plan details');        
+                    }
+
+                });
+            });
+
+            closeEditFormButton.addEventListener('click', closeEditForm);
+
+            editPlanForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(editPlanForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/prodaction_plan_page/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    if (response.ok) {
+                        alert('Plan row updated successfully');
+                        closeEditForm();
+                        location.reload();
+                    } else {
+                        alert('Error! Plan row did not update');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error in updating plan row');
+                }
+            });
+
+           
+        });
+
+        // Filter form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterForm = document.getElementById('filterForm');
+
+            filterbutton = document.getElementById('filter_button')
+            // filterbutton.addEventListener('click', async (e) => {
+            filterForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(filterForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    // const queryParams = new URLSearchParams(data).toString();
+                    const queryParams = data;
+                    console.log(queryParams);
+                    const response = await fetch(`/prodaction_plan_page/date?${queryParams}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (response.ok) {
+                        // Handle the response if needed
+                        const result = await response.json();
+                        // Do something with the result
+                    } else {
+                        alert('Error! Unable to filter the production plan.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error in filtering production plan.');
+                }
+            });
+        });
+
+        // Delete row handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const deleteButtons = document.querySelectorAll('.delete_button');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    const rowId = event.target.dataset.id;
+                    const confirmation = confirm('Are you sure you want to delete this row?');
+                    
+                    if (confirmation) {
+                        try {
+                            const response = await fetch(`/prodaction_plan_page/delete/${rowId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+
+                            if (response.ok) {
+                                alert('Row deleted successfully');
+                                location.reload();
+                            } else {
+                                alert('Error! Row did not delete');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error in deleting row');
+                        }
+                    }
+                });
+            });
+        });
+
+
+    </script>
+
+
+</body>
+</html>
